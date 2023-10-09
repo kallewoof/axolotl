@@ -23,7 +23,7 @@ from torch.utils.data import (
     RandomSampler,
     SequentialSampler,
 )
-from transformers import EarlyStoppingCallback, Trainer, TrainingArguments
+from transformers import EarlyStoppingCallback, Trainer, TrainingArguments, LlamaTokenizer
 from transformers.trainer_pt_utils import SequentialDistributedSampler
 
 from axolotl.monkeypatch.relora import ReLoRACallback, ReLoRAScheduler
@@ -178,9 +178,20 @@ class AxolotlTrainer(Trainer):
 
     args = None  # type: AxolotlTrainingArguments
 
+    def decode_tokenized(self, data):
+        if "input_ids" in data: data = data["input_ids"]
+        assert len(data) == 1
+        return ("".join(self.tokenizer.convert_ids_to_tokens(data[0]))).replace("▁", " ").replace("<0x0A>", "\\n")
+
+    def log_data_collator(self, features):
+        res = self.actual_data_collator(features)
+        print(f"sample: {self.decode_tokenized(res)}")
+        return res
+
     def __init__(self, *args, bench_data_collator=None, **kwargs):
         self.bench_data_collator = bench_data_collator
         super().__init__(*args, **kwargs)
+        self.tokenizer = LlamaTokenizer.from_pretrained("/usr/ssd/models/NousResearch_Llama2-13b-hf")
 
     def create_scheduler(
         self, num_training_steps: int, optimizer: torch.optim.Optimizer = None
@@ -251,6 +262,8 @@ class AxolotlTrainer(Trainer):
                     device_count=int(os.environ.get("WORLD_SIZE", 1)),
                 )
             )
+        self.actual_data_collator = self.data_collator
+        self.data_collator = self.log_data_collator
         return super().get_train_dataloader()
 
     def get_eval_dataloader(

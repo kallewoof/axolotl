@@ -8,6 +8,7 @@ from typing import Any, Callable, List, Union
 import numba
 import numpy as np
 from torch.utils.data import DistributedSampler, Sampler
+from transformers import LlamaTokenizer
 
 LOG = logging.getLogger("axolotl.utils.dataloader")
 
@@ -151,6 +152,7 @@ class MultipackDistributedDataloader:
         device_count: int = 1,
     ):
         # Dataset
+        self.tokenizer = LlamaTokenizer.from_pretrained("/usr/ssd/models/NousResearch_Llama2-13b-hf")
         self.dataset = dataset
         self.lengths = (
             dataset.data.column("position_ids")
@@ -241,7 +243,13 @@ class MultipackDistributedDataloader:
                         ]
                         concatenated[feature] = np.concatenate(arrays)
                 chunked_data.append(concatenated)
-            yield self.collate_fn(chunked_data)
+            to_yield = self.collate_fn(chunked_data)
+            def decode_tokenized(data):
+                if "input_ids" in data: data = data["input_ids"]
+                assert len(data) == 1
+                return ("".join(self.tokenizer.convert_ids_to_tokens(data[0]))).replace("▁", " ").replace("<0x0A>", "\\n")
+            print(f"\nyielding: {decode_tokenized(to_yield)}")
+            yield to_yield
             len_remaining -= 1
             if not len_remaining:
                 return
