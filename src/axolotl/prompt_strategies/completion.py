@@ -21,6 +21,7 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
             self.max_length = max_length
         self.align_samples = align_samples
         self.min_sample_len = 1
+        self.overlap_len = 0
 
     @property
     def supports_batched(self):
@@ -54,6 +55,9 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
 
             full_prompt = self._build_full_prompt(instruction, None, None)
             tokenized_full_prompt = self._tokenize(full_prompt)
+            steps = self.sequence_len - self.overlap_len
+            if steps < 1:
+                raise ValueError("Sequence length must be greater than overlap length")
 
             # The case of a completion task given a smaller initial text blurb is common,
             # e.g. when tasked to write the starting point of a text, whereas a completion
@@ -62,16 +66,15 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
             # right-padded tokens in the first sample, with no more padding required.
             if self.align_samples:
                 for key, val in tokenized_full_prompt.items():
-                    misaligned = len(val) % self.sequence_len
-                    if misaligned > 0:
-                        res[key].append(val[0:max(self.min_sample_len, misaligned)])
-                        # TODO: we may want a minimum length for the misaligned (starting) sample
-                        # as a single token is not a useful sample
-                    for i in range(misaligned, len(val), self.sequence_len):
+                    valsteps = (len(val) - self.sequence_len) // steps
+                    left_padding = (len(val) - self.sequence_len) - valsteps * steps
+                    if left_padding > 0:
+                        res[key].append(val[0 : max(self.min_sample_len, left_padding)])
+                    for i in range(left_padding, len(val), steps):
                         res[key].append(val[i : i + self.sequence_len])
             else:
                 for key, val in tokenized_full_prompt.items():
-                    for i in range(0, len(val), self.sequence_len):
+                    for i in range(0, len(val), steps):
                         res[key].append(val[i : i + self.sequence_len])
 
         return dict(res)
@@ -110,9 +113,12 @@ def load(tokenizer, cfg, ds_cfg: Optional[Dict[str, Any]] = None):
         max_length=cfg.sequence_len * 64,
         align_samples=tokenizer.padding_side == "left",
     )
-    if ds_cfg and "field" in ds_cfg:
-        strat.field = ds_cfg["field"]
-    if ds_cfg and "min_sample_len" in ds_cfg:
-        strat.min_sample_len = ds_cfg["min_sample_len"]
+    if ds_cfg:
+        if "field" in ds_cfg:
+            strat.field = ds_cfg["field"]
+        if "overlap_len" in ds_cfg:
+            strat.overlap_len = ds_cfg["overlap_len"]
+        if "min_sample_len" in ds_cfg:
+            strat.min_sample_len = ds_cfg["min_sample_len"]
 
     return strat
