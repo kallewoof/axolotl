@@ -20,6 +20,7 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
         if max_length is not None:
             self.max_length = max_length
         self.align_samples = align_samples
+        self.min_sample_len = 1
 
     @property
     def supports_batched(self):
@@ -63,7 +64,7 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
                 for key, val in tokenized_full_prompt.items():
                     misaligned = len(val) % self.sequence_len
                     if misaligned > 0:
-                        res[key].append(val[0:misaligned])
+                        res[key].append(val[0:max(self.min_sample_len, misaligned)])
                         # TODO: we may want a minimum length for the misaligned (starting) sample
                         # as a single token is not a useful sample
                     for i in range(misaligned, len(val), self.sequence_len):
@@ -111,5 +112,7 @@ def load(tokenizer, cfg, ds_cfg: Optional[Dict[str, Any]] = None):
     )
     if ds_cfg and "field" in ds_cfg:
         strat.field = ds_cfg["field"]
+    if ds_cfg and "min_sample_len" in ds_cfg:
+        strat.min_sample_len = ds_cfg["min_sample_len"]
 
     return strat
