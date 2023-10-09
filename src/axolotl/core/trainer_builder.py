@@ -114,9 +114,20 @@ class AxolotlTrainer(Trainer):
 
     args = None  # type: AxolotlTrainingArguments
 
+    def decode_tokenized(self, data):
+        if "input_ids" in data: data = data["input_ids"]
+        assert len(data) == 1
+        return ("".join(self.tokenizer.convert_ids_to_tokens(data[0]))).replace("▁", " ").replace("<0x0A>", "\\n")
+
+    def log_data_collator(self, features):
+        res = self.actual_data_collator(features)
+        print(f"sample: {self.decode_tokenized(res)}")
+        return res
+
     def __init__(self, *args, num_epochs=1, bench_data_collator=None, **kwargs):
         self.num_epochs = num_epochs
         self.bench_data_collator = bench_data_collator
+        # self.tokenizer = LlamaTokenizer.from_pretrained("?????")
         super().__init__(*args, **kwargs)
 
     def create_scheduler(

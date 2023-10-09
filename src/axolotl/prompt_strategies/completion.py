@@ -69,7 +69,7 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
                     left_padding = (len(val) - self.sequence_len) - valsteps * steps
                     if left_padding > 0:
                         res[key].append(val[0:max(self.min_sample_len, left_padding)])
-                    for i in range(left_padding, len(val), steps):
+                    for i in range(left_padding, len(val) - self.sequence_len, steps):
                         res[key].append(val[i : i + self.sequence_len])
             else:
                 for key, val in tokenized_full_prompt.items():
