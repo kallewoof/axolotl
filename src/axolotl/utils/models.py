@@ -287,6 +287,11 @@ def load_model(
     model_kwargs["device_map"] = cfg.device_map
     model_kwargs["max_memory"] = cfg.max_memory
     model_kwargs["torch_dtype"] = cfg.torch_dtype
+    # model_kwargs["offload_folder"] = "/usr/llm/offload_dir"
+    # max_memory = {"cpu": "200000MB"}
+    # device_map={"": "cpu"}
+    # model_kwargs["max_memory"] = max_memory
+    # model_kwargs["device_map"] = device_map
 
     if is_deepspeed_zero3_enabled():
         del model_kwargs["device_map"]
@@ -657,11 +662,16 @@ def load_lora(model, cfg, inference=False):
     )
 
     if cfg.lora_model_dir:
+        # max_memory = {"cpu": "200000MB"}
+        # device_map={"": "cpu"}
         LOG.debug("Loading pretained PEFT - LoRA")
         model = PeftModel.from_pretrained(
             model,
             cfg.lora_model_dir,
             is_trainable=(not inference),
+            # offload_folder="/usr/ssd/offload_dir",
+            # max_memory=max_memory,
+            # device_map=device_map,
         )
     else:
         model = get_peft_model(model, lora_config)
