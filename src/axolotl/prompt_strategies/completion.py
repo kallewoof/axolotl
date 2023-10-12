@@ -4,9 +4,9 @@ Basic completion text
 import logging
 from collections import defaultdict
 from typing import Any, Dict, Generator, Optional, Tuple
+import random
 
 from axolotl.prompt_tokenizers import InstructionPromptTokenizingStrategy
-
 
 class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
     """
@@ -22,6 +22,7 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
         self.align_samples = align_samples
         self.min_sample_len = 1
         self.overlap_len = 0
+        self.discard_portion = 0.0 # 1.0 means discard everything, 0.5 means discard half of the samples, etc.
 
     @property
     def supports_batched(self):
@@ -76,6 +77,13 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
                     for i in range(0, len(val), steps):
                         res[key].append(val[i : i + self.sequence_len])
 
+        # Discard a portion of the samples
+        if self.discard_portion > 0.0:
+            # Shuffle samples
+            random.shuffle(res[key])
+            for key, val in res.items():
+                res[key] = val[:int(len(val) * (1.0 - self.discard_portion))]
+
         return dict(res)
 
     def _build_full_prompt(
@@ -119,5 +127,7 @@ def load(tokenizer, cfg, ds_cfg: Optional[Dict[str, Any]] = None):
             strat.overlap_len = ds_cfg["overlap_len"]
         if "min_sample_len" in ds_cfg:
             strat.min_sample_len = ds_cfg["min_sample_len"]
+        if "discard_portion" in ds_cfg:
+            strat.discard_portion = ds_cfg["discard_portion"]
 
     return strat
