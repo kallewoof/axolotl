@@ -54,7 +54,7 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
             ) = self.parse_instruction_fields(prompt_row)
 
             full_prompt = self._build_full_prompt(instruction, None, None)
-            tokenized_full_prompt = self._tokenize(full_prompt)
+            tokenized_full_prompt = self._tokenize(full_prompt, add_eos_token=False) #  TODO: make add_eos_token an option
             steps = self.sequence_len - self.overlap_len
             if steps < 1: raise ValueError("Sequence length must be greater than overlap length")
 
@@ -69,7 +69,7 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
                     left_padding = (len(val) - self.sequence_len) - valsteps * steps
                     if left_padding > 0:
                         res[key].append(val[0:max(self.min_sample_len, left_padding)])
-                    for i in range(left_padding, len(val) - self.sequence_len, steps):
+                    for i in range(left_padding, len(val) + 1 - self.sequence_len, steps):
                         res[key].append(val[i : i + self.sequence_len])
             else:
                 for key, val in tokenized_full_prompt.items():

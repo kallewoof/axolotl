@@ -191,7 +191,7 @@ class AxolotlTrainer(Trainer):
     def __init__(self, *args, bench_data_collator=None, **kwargs):
         self.bench_data_collator = bench_data_collator
         super().__init__(*args, **kwargs)
-        self.tokenizer = LlamaTokenizer.from_pretrained("/usr/ssd/models/NousResearch_Llama2-13b-hf")
+        self.tokenizer = LlamaTokenizer.from_pretrained("/usr/llm/NousResearch_Llama2-13b-hf")
 
     def create_scheduler(
         self, num_training_steps: int, optimizer: torch.optim.Optimizer = None

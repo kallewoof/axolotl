@@ -68,7 +68,7 @@ def do_merge_lora(
     safe_serialization = cfg.save_safetensors is True
 
     LOG.info("running merge of LoRA with base model")
-    model = model.merge_and_unload()
+    model = model.merge_and_unload(progressbar=True)
     model.to(dtype=torch.float16)
 
     if cfg.local_rank == 0:
@@ -76,6 +76,7 @@ def do_merge_lora(
         model.save_pretrained(
             str(Path(cfg.output_dir) / "merged"),
             safe_serialization=safe_serialization,
+            progressbar=True
         )
         tokenizer.save_pretrained(str(Path(cfg.output_dir) / "merged"))
 

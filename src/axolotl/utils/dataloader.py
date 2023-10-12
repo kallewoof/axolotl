@@ -152,7 +152,7 @@ class MultipackDistributedDataloader:
         device_count: int = 1,
     ):
         # Dataset
-        self.tokenizer = LlamaTokenizer.from_pretrained("/usr/ssd/models/NousResearch_Llama2-13b-hf")
+        self.tokenizer = LlamaTokenizer.from_pretrained("/usr/llm/NousResearch_Llama2-13b-hf")
         self.dataset = dataset
         self.lengths = (
             dataset.data.column("position_ids")
