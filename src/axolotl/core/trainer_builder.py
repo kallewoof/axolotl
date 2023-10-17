@@ -116,7 +116,7 @@ class AxolotlTrainer(Trainer):
 
     def decode_tokenized(self, data):
         if "input_ids" in data: data = data["input_ids"]
-        return [("".join(self.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ").replace("<0x0A>", "\\n") for d in data]
+        return [("".join(self.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ").replace("<0x0A>", "\n") for d in data]
 
     def log_data_collator(self, features):
         res = self.actual_data_collator(features)
