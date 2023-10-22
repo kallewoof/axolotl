@@ -553,16 +553,16 @@ def load_lora(model, cfg, inference=False):
     )
 
     if cfg.lora_model_dir:
-        # max_memory = {"cpu": "200000MB"}
-        # device_map={"": "cpu"}
+        max_memory = {"cpu": "200000MB"}
+        device_map={"": "cpu"}
         LOG.debug("Loading pretained PEFT - LoRA")
         model = PeftModel.from_pretrained(
             model,
             cfg.lora_model_dir,
             is_trainable=(not inference),
             # offload_folder="/usr/ssd/offload_dir",
-            # max_memory=max_memory,
-            # device_map=device_map,
+            max_memory=max_memory,
+            device_map=device_map,
         )
     else:
         model = get_peft_model(model, lora_config)

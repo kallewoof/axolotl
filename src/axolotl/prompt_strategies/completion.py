@@ -77,12 +77,13 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
                     for i in range(0, len(val), steps):
                         res[key].append(val[i : i + self.sequence_len])
 
-        # Discard a portion of the samples
-        if self.discard_portion > 0.0:
-            # Shuffle samples
-            random.shuffle(res[key])
-            for key, val in res.items():
-                res[key] = val[:int(len(val) * (1.0 - self.discard_portion))]
+        # # Discard a portion of the samples
+        # if self.discard_portion > 0.0:
+        #     # Shuffle samples
+        #     random.shuffle(res[key])
+
+        #     for key, val in res.items():
+        #         res[key] = val[:int(len(val) * (1.0 - self.discard_portion))]
 
         return dict(res)
 
