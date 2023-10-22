@@ -184,7 +184,7 @@ class AxolotlTrainer(Trainer):
 
     def log_data_collator(self, features):
         res = self.actual_data_collator(features)
-        print(f"sample: {self.decode_tokenized(res)}")
+        print(f"\nsample: {self.decode_tokenized(res)}")
         return res
 
     def __init__(self, *args, bench_data_collator=None, **kwargs):
