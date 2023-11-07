@@ -23,7 +23,7 @@ from torch.utils.data import (
     RandomSampler,
     SequentialSampler,
 )
-from transformers import EarlyStoppingCallback, Trainer, TrainingArguments, LlamaTokenizer
+from transformers import EarlyStoppingCallback, Trainer, TrainingArguments
 from transformers.trainer_pt_utils import SequentialDistributedSampler
 
 from axolotl.monkeypatch.relora import ReLoRACallback, ReLoRAScheduler
@@ -180,7 +180,7 @@ class AxolotlTrainer(Trainer):
 
     def decode_tokenized(self, data):
         if "input_ids" in data: data = data["input_ids"]
-        return [("".join(self.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ").replace("<0x0A>", "\n") for d in data]
+        return [("".join(self.data_collator.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ").replace("<0x0A>", "\n") for d in data]
 
     def log_data_collator(self, features):
         res = self.actual_data_collator(features)
@@ -190,7 +190,6 @@ class AxolotlTrainer(Trainer):
     def __init__(self, *args, bench_data_collator=None, **kwargs):
         self.bench_data_collator = bench_data_collator
         super().__init__(*args, **kwargs)
-        self.tokenizer = LlamaTokenizer.from_pretrained("/usr/llm/NousResearch_Llama2-13b-hf")
 
     def create_scheduler(
         self, num_training_steps: int, optimizer: torch.optim.Optimizer = None
@@ -259,6 +258,7 @@ class AxolotlTrainer(Trainer):
                     packing_efficiency_estimate=self.args.sample_packing_efficiency,
                     sample_packing_seq_len_multiplier=self.args.sample_packing_seq_len_multiplier,
                     device_count=int(os.environ.get("WORLD_SIZE", 1)),
+                    tokenizer=self.data_collator.tokenizer,
                 )
             )
         self.actual_data_collator = self.data_collator
@@ -284,6 +284,7 @@ class AxolotlTrainer(Trainer):
                     packing_efficiency_estimate=self.args.sample_packing_efficiency,
                     sample_packing_seq_len_multiplier=self.args.eval_batch_size,
                     device_count=int(os.environ.get("WORLD_SIZE", 1)),
+                    tokenizer=self.data_collator.tokenizer,
                 )
             )
         return super().get_eval_dataloader(eval_dataset)
@@ -513,6 +514,7 @@ def calculate_total_num_steps(cfg, train_dataset, tokenizer):
                 packing_efficiency_estimate=cfg.sample_packing_eff_est,
                 sample_packing_seq_len_multiplier=cfg.micro_batch_size,
                 device_count=int(os.environ.get("WORLD_SIZE", 1)),
+                tokenizer=tokenizer,
             )
             data_loader_len = data_loader.len_w_stats()
             actual_eff = data_loader.efficiency()

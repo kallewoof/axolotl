@@ -8,7 +8,7 @@ from typing import Any, Callable, List, Union
 import numba
 import numpy as np
 from torch.utils.data import DistributedSampler, Sampler
-from transformers import LlamaTokenizer
+from transformers import AutoTokenizer
 
 LOG = logging.getLogger("axolotl.utils.dataloader")
 
@@ -150,9 +150,10 @@ class MultipackDistributedDataloader:
         packing_efficiency_estimate: float = 1.0,
         sample_packing_seq_len_multiplier: int = 1,
         device_count: int = 1,
+        tokenizer: AutoTokenizer = None,
     ):
         # Dataset
-        self.tokenizer = LlamaTokenizer.from_pretrained("/usr/llm/NousResearch_Llama2-13b-hf")
+        self.tokenizer = tokenizer
         self.dataset = dataset
         self.lengths = (
             dataset.data.column("position_ids")
