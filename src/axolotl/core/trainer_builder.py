@@ -171,7 +171,7 @@ class AxolotlTrainer(Trainer):
                     .values
                 ),
                 packing_efficiency_estimate=self.args.sample_packing_efficiency,
-                tokenizer=self.data_collator.tokenizer,
+                # tokenizer=self.data_collator.tokenizer,
             )
         return super()._get_train_sampler()
 
@@ -191,7 +191,7 @@ class AxolotlTrainer(Trainer):
                     .values
                 ),
                 packing_efficiency_estimate=self.args.sample_packing_efficiency,
-                tokenizer=self.data_collator.tokenizer,
+                # tokenizer=self.data_collator.tokenizer,
             )
         return super()._get_eval_sampler(eval_dataset)
 
@@ -733,6 +733,7 @@ class HFCausalTrainerBuilder(TrainerBuilderBase):
         )
         trainer = trainer_cls(
             model=self.model,
+            tokenizer=self.tokenizer,
             train_dataset=self.train_dataset,
             eval_dataset=self.eval_dataset,
             args=training_args,
