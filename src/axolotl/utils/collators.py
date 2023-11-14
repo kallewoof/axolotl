@@ -61,7 +61,7 @@ class DataCollatorForSeq2Seq:
         def decode_tokenized(data):
             if "input_ids" in data: data = data["input_ids"]
             data = [d["input_ids"] if "input_ids" in d else d for d in data]
-            return [("".join(self.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ").replace("<0x0A>", "\n") for d in data]
+            return [f"[{len(d)}] " + ("".join(self.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ").replace("<0x0A>", "\n") for d in data]
 
         print(decode_tokenized(features))
 
