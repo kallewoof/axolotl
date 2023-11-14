@@ -126,7 +126,6 @@ class AxolotlTrainer(Trainer):
     def __init__(self, *args, num_epochs=1, bench_data_collator=None, **kwargs):
         self.num_epochs = num_epochs
         self.bench_data_collator = bench_data_collator
-        # self.tokenizer = LlamaTokenizer.from_pretrained("?????")
         super().__init__(*args, **kwargs)
 
     def create_scheduler(

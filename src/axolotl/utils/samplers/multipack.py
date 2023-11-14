@@ -11,6 +11,8 @@ import numba
 import numpy as np
 from torch.utils.data import BatchSampler, Sampler
 
+from axolotl.utils.extra import EmittingIterator, TokenizedEmitter
+
 LOG = logging.getLogger("axolotl.utils.samplers.multipack")
 
 
@@ -115,12 +117,14 @@ class MultipackBatchSampler(BatchSampler):
         batch_max_len: int,
         lengths: np.ndarray,
         packing_efficiency_estimate: float = 1.0,
+        tokenizer: Any = None,
     ):
         super().__init__(sampler, batch_size, drop_last)
         self.batch_size = None
         self.batch_max_len = batch_max_len
         self.lengths: np.ndarray = lengths
         self.packing_efficiency_estimate = packing_efficiency_estimate or 1.0
+        self.tokenizer = tokenizer
 
         assert isinstance(self.lengths, np.ndarray)
 
@@ -158,7 +162,8 @@ class MultipackBatchSampler(BatchSampler):
 
     def __iter__(self):
         batches = self.generate_batches(set_stats=True)
-        return iter(batches)
+        return EmittingIterator(iter(batches), TokenizedEmitter(self.tokenizer))
+        # return iter(batches)
 
     def num_batches(self):
         batches = self.generate_batches(set_stats=True)
