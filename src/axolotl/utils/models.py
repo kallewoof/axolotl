@@ -222,10 +222,13 @@ def load_model(
 
     model_kwargs = {}
 
-    model_kwargs["device_map"] = cfg.device_map
+    model_kwargs["device_map"] = cfg.device_map # or "auto"
     model_kwargs["torch_dtype"] = cfg.torch_dtype
     # model_kwargs["offload_folder"] = "/usr/llm/offload_dir"
-    # max_memory = {"cpu": "200000MB"}
+    # max_memory = {}
+    # max_memory["cpu"] = "200000MB"
+    # max_memory[0] = "22000MB"
+    # max_memory[1] = "22000MB"
     # device_map={"": "cpu"}
     # model_kwargs["max_memory"] = max_memory
     # model_kwargs["device_map"] = device_map

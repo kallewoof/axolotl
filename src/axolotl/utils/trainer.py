@@ -180,7 +180,12 @@ class AxolotlTrainer(Trainer):
 
     def decode_tokenized(self, data):
         if "input_ids" in data: data = data["input_ids"]
-        return [("".join(self.data_collator.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ").replace("<0x0A>", "\n") for d in data]
+        # trimmed = []
+        # for sample in data:
+        #     # We want to simply delete the padding tokens
+        #     trimmed.append(sample[:np.where(sample == self.tokenizer.pad_token_id)[0][0]])
+        # data = trimmed
+        return [("".join(self.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ").replace("<0x0A>", "\n") for d in data]
 
     def log_data_collator(self, features):
         res = self.actual_data_collator(features)
@@ -771,6 +776,7 @@ def setup_trainer(cfg, train_dataset, eval_dataset, model, tokenizer, total_num_
         trainer_cls = ReLoRATrainer
     trainer = trainer_cls(
         model=model,
+        tokenizer=tokenizer,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         args=training_args,

@@ -247,8 +247,15 @@ class MultipackDistributedDataloader:
             to_yield = self.collate_fn(chunked_data)
             def decode_tokenized(data):
                 if "input_ids" in data: data = data["input_ids"]
-                assert len(data) == 1
-                return ("".join(self.tokenizer.convert_ids_to_tokens(data[0]))).replace("▁", " ").replace("<0x0A>", "\\n")
+                # trimmed = []
+                # for sample in data:
+                #     # We want to simply delete the padding tokens
+                #     trimmed.append(sample[:np.where(sample == self.tokenizer.pad_token_id)[0][0]])
+                # data = trimmed
+                if len(data) == 1:
+                    return ("".join(self.tokenizer.convert_ids_to_tokens(data[0]))).replace("▁", " ").replace("<0x0A>", "\\n")
+                else:
+                    return [("".join(self.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ").replace("<0x0A>", "\n") for d in data]
             print(f"\nyielding: {decode_tokenized(to_yield)}")
             yield to_yield
             len_remaining -= 1
