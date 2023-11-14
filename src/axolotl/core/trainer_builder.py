@@ -170,7 +170,7 @@ class AxolotlTrainer(Trainer):
                     .values
                 ),
                 packing_efficiency_estimate=self.args.sample_packing_efficiency,
-                # tokenizer=self.data_collator.tokenizer,
+                tokenizer=self.tokenizer,
             )
         return super()._get_train_sampler()
 
@@ -190,7 +190,7 @@ class AxolotlTrainer(Trainer):
                     .values
                 ),
                 packing_efficiency_estimate=self.args.sample_packing_efficiency,
-                # tokenizer=self.data_collator.tokenizer,
+                tokenizer=self.tokenizer,
             )
         return super()._get_eval_sampler(eval_dataset)
 
@@ -204,7 +204,6 @@ class AxolotlTrainer(Trainer):
                 "collate_fn": data_collator,
                 "num_workers": self.args.dataloader_num_workers,
                 "pin_memory": self.args.dataloader_pin_memory,
-                "tokenizer": self.tokenizer,
             }
             if self.args.dataloader_prefetch_factor:
                 dataloader_params[
@@ -240,7 +239,6 @@ class AxolotlTrainer(Trainer):
                 "collate_fn": data_collator,
                 "num_workers": self.args.dataloader_num_workers,
                 "pin_memory": self.args.dataloader_pin_memory,
-                "tokenizer": self.tokenizer,
             }
             if self.args.dataloader_prefetch_factor:
                 dataloader_params[

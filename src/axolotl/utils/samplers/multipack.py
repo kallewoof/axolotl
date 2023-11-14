@@ -11,8 +11,6 @@ import numba
 import numpy as np
 from torch.utils.data import BatchSampler, Sampler
 
-from axolotl.utils.extra import EmittingIterator, TokenizedEmitter
-
 LOG = logging.getLogger("axolotl.utils.samplers.multipack")
 
 
@@ -162,8 +160,7 @@ class MultipackBatchSampler(BatchSampler):
 
     def __iter__(self):
         batches = self.generate_batches(set_stats=True)
-        return EmittingIterator(iter(batches), TokenizedEmitter(self.tokenizer))
-        # return iter(batches)
+        return iter(batches)
 
     def num_batches(self):
         batches = self.generate_batches(set_stats=True)
