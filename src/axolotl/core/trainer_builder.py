@@ -25,6 +25,7 @@ from axolotl.monkeypatch.relora import ReLoRACallback, ReLoRAScheduler
 from axolotl.utils.callbacks import (
     EvalFirstStepCallback,
     GPUStatsCallback,
+    LossWatchDogCallback,
     SaveAxolotlConfigtoWandBCallback,
     SaveBetterTransformerModelCallback,
     bench_eval_callback_factory,
@@ -440,6 +441,9 @@ class HFCausalTrainerBuilder(TrainerBuilderBase):
             callbacks.append(
                 SaveAxolotlConfigtoWandBCallback(self.cfg.axolotl_config_path)
             )
+
+        if self.cfg.loss_watchdog_threshold is not None:
+            callbacks.append(LossWatchDogCallback(self.cfg))
 
         return callbacks
 
