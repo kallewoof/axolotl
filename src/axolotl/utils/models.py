@@ -202,7 +202,25 @@ def load_model(
 
     model_kwargs = {}
 
-    model_kwargs["device_map"] = cfg.device_map # or "auto"
+    if cfg.gpu_memory_limit:
+        # Based on https://github.com/togethercomputer/OpenChatKit/blob/main/inference/bot.py
+        from accelerate import infer_auto_device_map, init_empty_weights
+        max_memory = {}
+        for i in range(torch.cuda.device_count()):
+            max_memory[i] = f"{cfg.gpu_memory_limit}GiB"
+        max_memory["cpu"] = "256GB"
+        with init_empty_weights():
+            model_canvas = AutoModelForCausalLM.from_config(model_config)
+        model_canvas.tie_weights()
+        device_map = infer_auto_device_map(
+            model_canvas,
+            max_memory=max_memory,
+            dtype='float16', # TODO: may probably use bfloat16 and others here as well
+        )
+    else:
+        device_map = cfg.device_map
+
+    model_kwargs["device_map"] = device_map
     model_kwargs["torch_dtype"] = cfg.torch_dtype
     # model_kwargs["offload_folder"] = "/usr/llm/offload_dir"
     # max_memory = {}
