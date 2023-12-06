@@ -141,7 +141,7 @@ class LossWatchDogCallback(TrainerCallback):
         control: TrainerControl,
         **_kwargs,
     ):
-        if len(state.log_history) > 0 and "loss" in state.log_history[-1]:
+        if len(state.log_history) > 64 and "loss" in state.log_history[-1]:
             if state.log_history[-1]["loss"] > self.threshold:
                 self.violations += 1
                 if self.violations >= self.patience:
