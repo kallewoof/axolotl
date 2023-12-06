@@ -58,12 +58,68 @@ class DataCollatorForSeq2Seq:
         if return_tensors is None:
             return_tensors = self.return_tensors
 
+        # def recode(l):
+        #     rv = []
+        #     for s in l:
+        #         # Convert <0xNN> to \NN
+        #         m = s.split("<0x")
+        #         if len(m) == 1:
+        #             rv.append(s)
+        #             continue
+        #         r = m[0]
+        #         for i in range(1, len(m)):
+        #             if not (len(m[i]) > 2 and m[i][2] == ">"):
+        #                 print(f"wtf is up with {m[i]}")
+        #             assert len(m[i]) > 2 and m[i][2] == ">"
+        #             r += chr(int(m[i][:2], 16)) + m[i][3:]
+        #         rv.append(r)
+        #     return rv
+
         def decode_tokenized(data):
+            t = self.tokenizer.sp_model
             if "input_ids" in data: data = data["input_ids"]
             data = [d["input_ids"] if "input_ids" in d else d for d in data]
-            return [f"[{len(d)}] " + ("".join(self.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ").replace("<0x0A>", "\n") for d in data]
+            rvf = []
+            for d in data:
+                rv = []
+                for id in d:
+                    # print type of id
+                    id = id.item()
+                    if t.is_unknown(id):
+                        # ignore
+                        continue
+                    if t.is_control(id):
+                        # add newline, but not if we have a newline already
+                        if len(rv) > 0 and rv[-1] != 10:
+                            rv.append(10)
+                        continue
+                    if t.is_byte(id):
+                        # <U+XX> tokens (which may be invalid UTF-8)
+                        piece = t.id_to_piece(id)
+                        if len(piece) != 6:
+                            print(f"bad piece {piece}")
+                            assert len(piece) == 6
+                        byte_value = int(piece[3:-1], 16)
+                        rv.append(byte_value)
+                        continue
+                    text = t.id_to_piece(id).replace("\u2581", " ").encode("utf-8")
+                    # if text.startswith("▁"):
+                    #     text = text[1:]
+                    try:
+                        rv.extend(text)
+                    except:
+                        print(f"failed to extend {text} to {rv} in {d}")
+                        raise
+                try:
+                    rvf.append(str(bytes(rv), 'utf-8'))
+                except:
+                    rvf.append("".join(self.tokenizer.convert_ids_to_tokens(d)).replace("▁", " "))
+                    # print(f"failed to convert {rv} to utf-8 from {d}")
+                    # raise
+            return [f"[{len(d)}] " + d for d in rvf]
+            # return [f"[{len(d)}] " + ("".join(recode(self.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ")) for d in data]
 
-        print(decode_tokenized(features))
+        print("\n- ".join(decode_tokenized(features)))
 
         for feature_name, pad_token_id in [
             ("labels", self.label_pad_token_id),
