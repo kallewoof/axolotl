@@ -215,7 +215,7 @@ def load_model(
         device_map = infer_auto_device_map(
             model_canvas,
             max_memory=max_memory,
-            dtype='float16', # TODO: may probably use bfloat16 and others here as well
+            dtype=cfg.torch_dtype,
         )
     else:
         device_map = cfg.device_map
