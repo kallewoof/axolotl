@@ -683,10 +683,13 @@ class HFCausalTrainerBuilder(TrainerBuilderBase):
         training_arguments_kwargs = self.hook_pre_create_training_args(
             training_arguments_kwargs
         )
-        if self.cfg.neftune_noise_alpha is not None and self.cfg.neftune_noise_alpha > 0:
-            training_arguments_kwargs["neftune_noise_alpha"] = (
-                self.cfg.neftune_noise_alpha
-            )
+        if (
+            self.cfg.neftune_noise_alpha is not None
+            and self.cfg.neftune_noise_alpha > 0
+        ):
+            training_arguments_kwargs[
+                "neftune_noise_alpha"
+            ] = self.cfg.neftune_noise_alpha
 
         training_args = (
             AxolotlTrainingArguments(  # pylint: disable=unexpected-keyword-arg
