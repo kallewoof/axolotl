@@ -683,6 +683,14 @@ class HFCausalTrainerBuilder(TrainerBuilderBase):
         training_arguments_kwargs = self.hook_pre_create_training_args(
             training_arguments_kwargs
         )
+
+        if self.cfg.noisy_embedding_alpha is not None:
+            # Deprecated, use neftune_noise_alpha
+            LOG.warning("noisy_embedding_alpha is deprecated, use neftune_noise_alpha")
+            training_arguments_kwargs[
+                "neftune_noise_alpha"
+            ] = self.cfg.noisy_embedding_alpha
+
         if (
             self.cfg.neftune_noise_alpha is not None
             and self.cfg.neftune_noise_alpha > 0
