@@ -15,6 +15,7 @@ LOG = logging.getLogger("axolotl")
 
 def choose_device(cfg):
     prepare_loader(cfg)
+
     def get_device():
         try:
             if torch.cuda.is_available():

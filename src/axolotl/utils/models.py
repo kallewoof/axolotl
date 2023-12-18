@@ -205,6 +205,7 @@ def load_model(
     if cfg.gpu_memory_limit:
         # Based on https://github.com/togethercomputer/OpenChatKit/blob/main/inference/bot.py
         from accelerate import infer_auto_device_map, init_empty_weights
+
         max_memory = {}
         for i in range(torch.cuda.device_count()):
             max_memory[i] = f"{cfg.gpu_memory_limit}GiB"
@@ -575,7 +576,7 @@ def load_lora(model, cfg, inference=False):
 
     if cfg.lora_model_dir:
         max_memory = {"cpu": "200000MB"}
-        device_map={"": "cpu"}
+        device_map = {"": "cpu"}
         LOG.debug("Loading pretained PEFT - LoRA")
         model = PeftModel.from_pretrained(
             model,

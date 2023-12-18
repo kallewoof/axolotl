@@ -2,11 +2,13 @@
 Basic completion text
 """
 import logging
+
+# import random
 from collections import defaultdict
 from typing import Any, Dict, Generator, Optional, Tuple
-import random
 
 from axolotl.prompt_tokenizers import InstructionPromptTokenizingStrategy
+
 
 class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
     """
@@ -22,7 +24,7 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
         self.align_samples = align_samples
         self.min_sample_len = 1
         self.overlap_len = 0
-        self.discard_portion = 0.0 # 1.0 means discard everything, 0.5 means discard half of the samples, etc.
+        self.discard_portion = 0.0  # 1.0 means discard everything, 0.5 means discard half of the samples, etc.
 
     @property
     def supports_batched(self):
@@ -55,9 +57,11 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
             ) = self.parse_instruction_fields(prompt_row)
 
             full_prompt = self._build_full_prompt(instruction, None, None)
-            tokenized_full_prompt = self._tokenize(full_prompt, add_eos_token=False) #  TODO: make add_eos_token an option
+            #  TODO: make add_eos_token an option
+            tokenized_full_prompt = self._tokenize(full_prompt, add_eos_token=False)
             steps = self.sequence_len - self.overlap_len
-            if steps < 1: raise ValueError("Sequence length must be greater than overlap length")
+            if steps < 1:
+                raise ValueError("Sequence length must be greater than overlap length")
 
             # The case of a completion task given a smaller initial text blurb is common,
             # e.g. when tasked to write the starting point of a text, whereas a completion
@@ -69,8 +73,10 @@ class CompletionPromptTokenizingStrategy(InstructionPromptTokenizingStrategy):
                     valsteps = (len(val) - self.sequence_len) // steps
                     left_padding = (len(val) - self.sequence_len) - valsteps * steps
                     if left_padding > 0:
-                        res[key].append(val[0:max(self.min_sample_len, left_padding)])
-                    for i in range(left_padding, len(val) + 1 - self.sequence_len, steps):
+                        res[key].append(val[0 : max(self.min_sample_len, left_padding)])
+                    for i in range(
+                        left_padding, len(val) + 1 - self.sequence_len, steps
+                    ):
                         res[key].append(val[i : i + self.sequence_len])
             else:
                 for key, val in tokenized_full_prompt.items():

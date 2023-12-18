@@ -77,7 +77,8 @@ class DataCollatorForSeq2Seq:
 
         def decode_tokenized(data):
             t = self.tokenizer.sp_model
-            if "input_ids" in data: data = data["input_ids"]
+            if "input_ids" in data:
+                data = data["input_ids"]
             data = [d["input_ids"] if "input_ids" in d else d for d in data]
             rvf = []
             for d in data:
@@ -107,16 +108,20 @@ class DataCollatorForSeq2Seq:
                     #     text = text[1:]
                     try:
                         rv.extend(text)
-                    except:
+                    except Exception:
                         print(f"failed to extend {text} to {rv} in {d}")
                         raise
                 try:
-                    rvf.append(str(bytes(rv), 'utf-8'))
-                except:
-                    rvf.append("".join(self.tokenizer.convert_ids_to_tokens(d)).replace("▁", " "))
+                    rvf.append(str(bytes(rv), "utf-8"))
+                except Exception:
+                    rvf.append(
+                        "".join(self.tokenizer.convert_ids_to_tokens(d)).replace(
+                            "▁", " "
+                        )
+                    )
                     # print(f"failed to convert {rv} to utf-8 from {d}")
                     # raise
-            return [f"[{len(d)}] " + d for d in rvf]
+            return [f"[{len(d)}] " + d[:512] for d in rvf]
             # return [f"[{len(d)}] " + ("".join(recode(self.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ")) for d in data]
 
         print("\n- ".join(decode_tokenized(features)))

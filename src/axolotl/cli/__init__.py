@@ -78,7 +78,7 @@ def do_merge_lora(
         model.save_pretrained(
             str(Path(cfg.output_dir) / "merged"),
             safe_serialization=safe_serialization,
-            progressbar=True
+            progressbar=True,
         )
         tokenizer.save_pretrained(str(Path(cfg.output_dir) / "merged"))
 
