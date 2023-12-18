@@ -292,6 +292,7 @@ def load_model(
         for i in range(torch.cuda.device_count()):
             max_memory[i] = f"{cfg.gpu_memory_limit}GiB"
         max_memory["cpu"] = "256GB"
+
         with init_empty_weights():
             model_canvas = AutoModelForCausalLM.from_config(model_config)
         model_canvas.tie_weights()
@@ -681,13 +682,15 @@ def load_lora(model, cfg, inference=False):
 
     if cfg.lora_model_dir:
         LOG.debug("Loading pretained PEFT - LoRA")
+        model_kwargs: Any = {}
+        if cfg.lora_on_cpu:
+            model_kwargs["max_memory"] = {"cpu": "256GiB"}
+            model_kwargs["device_map"] = {"": "cpu"}
         model = PeftModel.from_pretrained(
             model,
             cfg.lora_model_dir,
             is_trainable=(not inference),
-            # offload_folder="/usr/ssd/offload_dir",
-            # max_memory=max_memory,
-            # device_map=device_map,
+            **model_kwargs,
         )
     else:
         model = get_peft_model(model, lora_config)
