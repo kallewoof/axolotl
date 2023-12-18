@@ -2,6 +2,8 @@
 Basic completion text
 """
 import logging
+
+# import random
 from collections import defaultdict
 from typing import Any, Dict, Generator, Optional, Tuple
 

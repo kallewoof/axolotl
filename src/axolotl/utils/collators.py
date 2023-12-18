@@ -62,6 +62,76 @@ class DataCollatorForSeq2Seq:
         if return_tensors is None:
             return_tensors = self.return_tensors
 
+        # def recode(l):
+        #     rv = []
+        #     for s in l:
+        #         # Convert <0xNN> to \NN
+        #         m = s.split("<0x")
+        #         if len(m) == 1:
+        #             rv.append(s)
+        #             continue
+        #         r = m[0]
+        #         for i in range(1, len(m)):
+        #             if not (len(m[i]) > 2 and m[i][2] == ">"):
+        #                 print(f"wtf is up with {m[i]}")
+        #             assert len(m[i]) > 2 and m[i][2] == ">"
+        #             r += chr(int(m[i][:2], 16)) + m[i][3:]
+        #         rv.append(r)
+        #     return rv
+
+        def decode_tokenized(data):
+            tokspm = self.tokenizer.sp_model
+            if "input_ids" in data:
+                data = data["input_ids"]
+            data = [d["input_ids"] if "input_ids" in d else d for d in data]
+            rvf = []
+            for entry in data:
+                retval = []
+                for tokid in entry:
+                    # print type of id
+                    tokid = tokid.item()
+                    if tokspm.is_unknown(tokid):
+                        # ignore
+                        continue
+                    if tokspm.is_control(tokid):
+                        # add newline, but not if we have a newline already
+                        if len(retval) > 0 and retval[-1] != 10:
+                            retval.append(10)
+                        continue
+                    if tokspm.is_byte(tokid):
+                        # <U+XX> tokens (which may be invalid UTF-8)
+                        piece = tokspm.id_to_piece(tokid)
+                        if len(piece) != 6:
+                            print(f"bad piece {piece}")
+                            assert len(piece) == 6
+                        byte_value = int(piece[3:-1], 16)
+                        retval.append(byte_value)
+                        continue
+                    text = (
+                        tokspm.id_to_piece(tokid).replace("\u2581", " ").encode("utf-8")
+                    )
+                    # if text.startswith("▁"):
+                    #     text = text[1:]
+                    try:
+                        retval.extend(text)
+                    except Exception:
+                        print(f"failed to extend {text} to {retval} in {entry}")
+                        raise
+                try:
+                    rvf.append(str(bytes(retval), "utf-8"))
+                except ValueError:
+                    rvf.append(
+                        "".join(self.tokenizer.convert_ids_to_tokens(entry)).replace(
+                            "▁", " "
+                        )
+                    )
+                    # print(f"failed to convert {rv} to utf-8 from {d}")
+                    # raise
+            return [f"[{len(d)}] " + d[:512] for d in rvf]
+            # return [f"[{len(d)}] " + ("".join(recode(self.tokenizer.convert_ids_to_tokens(d))).replace("▁", " ")) for d in data]
+
+        print("\n- ".join(decode_tokenized(features)))
+
         for feature_name, pad_token_id in [
             ("labels", self.label_pad_token_id),
             ("position_ids", self.position_pad_token_id),

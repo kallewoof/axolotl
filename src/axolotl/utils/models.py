@@ -2,7 +2,7 @@
 import logging
 import math
 import os
-from typing import Optional, Tuple  # noqa: F401
+from typing import Any, Dict, Optional, Tuple  # noqa: F401
 
 import addict
 import bitsandbytes as bnb
@@ -284,8 +284,26 @@ def load_model(
 
     model_kwargs = {}
 
-    model_kwargs["device_map"] = cfg.device_map
-    model_kwargs["max_memory"] = cfg.max_memory
+    if cfg.gpu_memory_limit:
+        # Based on https://github.com/togethercomputer/OpenChatKit/blob/main/inference/bot.py
+        from accelerate import infer_auto_device_map, init_empty_weights
+
+        max_memory: Dict[Any, str] = {}
+        for i in range(torch.cuda.device_count()):
+            max_memory[i] = f"{cfg.gpu_memory_limit}GiB"
+        max_memory["cpu"] = "256GB"
+        with init_empty_weights():
+            model_canvas = AutoModelForCausalLM.from_config(model_config)
+        model_canvas.tie_weights()
+        device_map = infer_auto_device_map(
+            model_canvas,
+            max_memory=max_memory,
+            dtype=cfg.torch_dtype,
+        )
+    else:
+        device_map = cfg.device_map
+
+    model_kwargs["device_map"] = device_map
     model_kwargs["torch_dtype"] = cfg.torch_dtype
     # model_kwargs["offload_folder"] = "/usr/llm/offload_dir"
     # max_memory = {"cpu": "200000MB"}
@@ -662,8 +680,6 @@ def load_lora(model, cfg, inference=False):
     )
 
     if cfg.lora_model_dir:
-        # max_memory = {"cpu": "200000MB"}
-        # device_map={"": "cpu"}
         LOG.debug("Loading pretained PEFT - LoRA")
         model = PeftModel.from_pretrained(
             model,
